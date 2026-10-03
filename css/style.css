@@ -751,3 +751,5 @@ img.zoomable { cursor: zoom-in; }
 .helmet-canvas:active { cursor: grabbing; }
 .helmet-zoom { display: flex; align-items: center; gap: 12px; font: 600 12px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
 .helmet-zoom input { flex: 1; accent-color: var(--amber); }
+/* Прогресс с этого устройства — переносится в аккаунт только по нажатию. */
+.profile.is-device { border-style: dashed; }

@@ -80,6 +80,8 @@ const done = { v: 2, name: "Миша", done: [1, 2], current: 3, onboarded: true
   check("владелец вошёл", await own.evaluate(() => G.account.owner === true));
   await own.evaluate(() => G.voice.setMuted(true));
   await own.click("#btn-start"); await own.waitForTimeout(600);
+  check("новое устройство — «Кто играет?»", await own.isVisible("#screen-profiles"));
+  await own.click(".profile"); await own.waitForTimeout(600);
   await own.click("#btn-home-profile"); await own.waitForTimeout(400);
   check("у владельца есть блок «Семья»", await own.isVisible("#pf-family"));
   await own.fill("#inp-family-email", "не почта"); await own.click("#btn-family-add");
@@ -92,15 +94,19 @@ const done = { v: 2, name: "Миша", done: [1, 2], current: 3, onboarded: true
   check("профиль не закрылся от Enter", await own.isVisible("#dlg-profile"));
   await own.screenshot({ path: OUT + "/family-owner.png" });
 
-  // 5. Родственник открывает приглашение.
-  const rel = await fresh(b, null);
+  // 5. Родственник открывает приглашение. На этом устройстве уже есть чужой прогресс «Петя»:
+  //    сам в аккаунт он попасть не должен.
+  const rel = await fresh(b, { v: 2, name: "Петя", done: [1, 2, 3, 4], current: 5, onboarded: true });
   await rel.goto(invite); await rel.waitForTimeout(1200);
   const st = await rel.evaluate(() => ({ email: G.account.email, owner: G.account.owner, mode: G.portrait.mode }));
   check("родственник вошёл по приглашению", st.email === RELATIVE && !st.owner && st.mode === "ai", JSON.stringify(st));
   await rel.goto(URL); await rel.goto(invite); await rel.waitForTimeout(1200);
   check("ссылка срабатывает один раз", (await rel.textContent("#boot-account")).includes("устарела") || (await rel.evaluate(() => G.account.email)) === RELATIVE);
   await rel.evaluate(() => G.voice.setMuted(true));
-  await rel.click("#btn-start"); await rel.fill("#inp-name", "Даша"); await rel.click("#form-name button"); await rel.waitForTimeout(800);
+  check("чужой прогресс сам не перенёсся", sql(`SELECT COUNT(*) AS n FROM kids k JOIN parents p ON p.id = k.parent_id WHERE p.email = '${RELATIVE}'`)[0].n === 0);
+  await rel.click("#btn-start"); await rel.waitForTimeout(600);
+  check("«Кто играет?» с кнопкой «перенести»", await rel.isVisible("#screen-profiles") && await rel.isVisible(".profile.is-device"));
+  await rel.click("#btn-new-kid"); await rel.fill("#inp-name", "Даша"); await rel.click("#form-name button"); await rel.waitForTimeout(800);
   check("у родственника профиль ребёнка на сервере", sql(`SELECT COUNT(*) AS n FROM kids k JOIN parents p ON p.id = k.parent_id WHERE p.email = '${RELATIVE}'`)[0].n === 1);
   const relFamily = await rel.evaluate(async () => (await fetch("api/family")).status);
   check("родственнику список семьи недоступен", relFamily === 403);

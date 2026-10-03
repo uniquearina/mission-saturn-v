@@ -22,14 +22,18 @@ const OWNER = process.env.OWNER_EMAIL || (require("fs").readFileSync(require("pa
   const link = await p.evaluate(() => G.devLink);
   await p.goto(link); await p.waitForTimeout(1200);
   console.log("1 after link:", await p.textContent("#boot-account"));
-  console.log("1b photo moved to account:", JSON.stringify(await p.evaluate(async () => {
-    const kid = G.account.kids.find((k) => k.progress.name === "Миша");
-    const server = await (await fetch("api/portrait?kid=" + kid.id)).json();
-    return { local: localStorage.getItem("saturn5.portrait.local"), kidLocal: !!G.portrait.get(kid.id).avatar, server: Object.keys(server) };
-  })));
+  console.log("1a nothing moved silently:", await p.evaluate(() => !G.account.kids.some((k) => k.id === G.account.activeKid)));
   await p.evaluate(() => G.voice.setMuted(true));
   await p.click("#btn-start"); await p.waitForTimeout(800);
-  console.log("2 start → home directly:", await p.isVisible("#screen-home"), "| profiles screen:", await p.isVisible("#screen-profiles"), "| mission:", await p.textContent("#tb-num"));
+  console.log("2 new device → «Кто играет?»:", await p.isVisible("#screen-profiles"), "| move button:", await p.isVisible(".profile.is-device"));
+  if (await p.isVisible(".profile.is-device")) await p.click(".profile.is-device");
+  else await p.click(".profile");
+  await p.waitForTimeout(1200);
+  console.log("2b photo moved with progress:", JSON.stringify(await p.evaluate(async () => {
+    const kid = G.account.kids.find((k) => k.id === G.account.activeKid);
+    const server = await (await fetch("api/portrait?kid=" + kid.id)).json();
+    return { kid: kid.callsign, local: localStorage.getItem("saturn5.portrait.local"), server: Object.keys(server) };
+  })), "| home:", await p.isVisible("#screen-home"));
   await p.click("#btn-continue"); await p.waitForTimeout(300);
   for (let k = 0; k < 3 && await p.isVisible("#intro"); k++) { await p.waitForFunction(() => !document.getElementById("in-next").disabled, null, { timeout: 60000 }); await p.click("#in-next"); await p.waitForTimeout(300); }
   await p.click("#btn-profile"); await p.click("#btn-pf-switch"); await p.waitForTimeout(300);

@@ -40,8 +40,8 @@
     if (progress.done.length) progress.onboarded = true;
     G.account.activeKid = kid.id;
     try { localStorage.setItem(LAST_KID, String(kid.id)); } catch { /* без сохранения */ }
-    // С сервера — картинки с других устройств; с этого устройства — то, что сделано до входа.
-    G.portrait.sync().then(() => G.portrait.adopt(kid.id)).then(renderAvatar);
+    // С сервера — картинки с других устройств. Фото с этого устройства переносим только по кнопке «Перенести».
+    G.portrait.sync().then(renderAvatar);
     session.completed = 0; session.nextBreak = 5;
     try { localStorage.setItem(STORE, JSON.stringify(progress)); } catch { /* без сохранения */ }
   }
@@ -102,7 +102,7 @@
     .catch((e) => { pyFailed = true; console.error(e); throw e; });
 
   // ───────── Вход для семьи: по ссылке-приглашению, владелец — по письму ─────────
-  let loginNotice = "";
+  let loginNotice = "", deviceProgress = null;
   async function handleLoginLink() {
     const m = location.hash.match(/^#login=([\w-]+)/);
     if (!m) return;
@@ -110,13 +110,14 @@
     const r = await G.account.verify(m[1]);
     if (!r.ok) { loginNotice = L("Ссылка устарела или уже использована. Попросите новую ссылку-приглашение.", "The link has expired or was already used. Ask for a new invitation link."); return; }
     loginNotice = L("Вход выполнен.", "Signed in.");
-    // Прогресс, накопленный на этом компьютере до входа, переносим в профиль.
-    let kid = progress.name && G.account.kids.find((k) => (k.progress && k.progress.name || k.callsign) === progress.name);
-    if (progress.name && !kid) kid = await G.account.createKid(progress.name, { ...progress });
-    if (kid) {
-      await G.portrait.adopt(kid.id);   // фото, сделанное до входа
-      try { localStorage.setItem(LAST_KID, String(kid.id)); } catch { /* без сохранения */ }
-    }
+  }
+  // Прогресс с этого устройства сам в аккаунт не переносим (так однажды чужой профиль попал к родственнику):
+  // на экране «Кто играет?» для него есть отдельная кнопка «Перенести». Прогресс с устройства — это то,
+  // что сохранено в браузере, если здесь ещё не играл никто из этого аккаунта.
+  function findDeviceProgress() {
+    let last = null;
+    try { last = Number(localStorage.getItem(LAST_KID)); } catch { /* без сохранения */ }
+    deviceProgress = G.account.email && progress.name && !G.account.kids.some((k) => k.id === last) ? { ...progress } : null;
   }
   function renderAccount() {
     for (const id of ["boot-account", "profiles-account"]) {
@@ -150,13 +151,14 @@
       el.appendChild(b);
     }
   }
-  const accountReady = G.account.init().then(handleLoginLink).then(() => {
+  const accountReady = G.account.init().then(handleLoginLink).then(findDeviceProgress).then(() => {
     if (G.account.email) G.portrait.prune(G.account.kids.map((k) => k.id));
   }).then(renderAccount);
   // Ссылка из письма открыта в этой же вкладке: страница не перезагружается, ловим смену адреса.
   addEventListener("hashchange", async () => {
     if (!/^#login=/.test(location.hash)) return;
     await handleLoginLink();
+    findDeviceProgress();
     renderAccount();
     ["dlg-photo", "dlg-profile"].forEach(close);   // окно «Письмо отправлено» больше не нужно
     show("screen-boot");
@@ -508,14 +510,18 @@
   // После входа — сразу тот, кто играл последним; детей нет — регистрация нового.
   // Выбор другого ребёнка — в профиле («Сменить игрока»).
   const LAST_KID = "saturn5.lastKid";
+  // Новое устройство (здесь ещё никто из аккаунта не играл) — спрашиваем «Кто играет?», а не берём первого.
   function openLastKid() {
     let last = null;
     try { last = Number(localStorage.getItem(LAST_KID)); } catch { /* без сохранения */ }
-    const kid = G.account.kids.find((k) => k.id === last) || G.account.kids[0];
-    if (!kid) { startRegistration("newKid"); return; }
-    useKid(kid);
-    enterGame();
+    const kid = G.account.kids.find((k) => k.id === last);
+    if (kid) { useKid(kid); enterGame(); return; }
+    if (!G.account.kids.length && !movable()) { startRegistration("newKid"); return; }
+    showProfiles();
   }
+  // Прогресс с этого устройства, которого ещё нет в аккаунте, — его можно перенести.
+  const profileName = (k) => (k.progress && k.progress.name) || k.callsign;
+  const movable = () => deviceProgress && !G.account.kids.some((k) => profileName(k) === deviceProgress.name) ? deviceProgress : null;
 
   // ───────── Кто играет ─────────
   function showProfiles() {
@@ -527,10 +533,28 @@
       b.type = "button";
       b.className = "profile";
       b.innerHTML = `<span class="pf-name"></span><span class="pf-meta">${L("Миссий", "Missions")}: ${done} ${L("из", "of")} ${MISSIONS.length}</span><span class="pf-bar"><i style="width:${(done / MISSIONS.length) * 100}%"></i></span>`;
-      b.querySelector(".pf-name").textContent = (kid.progress && kid.progress.name) || kid.callsign;
+      b.querySelector(".pf-name").textContent = profileName(kid);
       const av = G.portrait.get(kid.id).avatar;
       if (av) { const img = document.createElement("img"); img.className = "avatar-md"; img.alt = ""; img.src = av; b.prepend(img); }
       b.addEventListener("click", () => { useKid(kid); enterGame(); });
+      box.appendChild(b);
+    }
+    const dev = movable();
+    if (dev) {
+      const done = dev.done.length;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "profile is-device";
+      b.innerHTML = `<span class="pf-name"></span><span class="pf-meta">${L("С этого устройства — перенести в аккаунт", "From this device — move to the account")} · ${L("миссий", "missions")}: ${done}</span>`;
+      b.querySelector(".pf-name").textContent = dev.name;
+      b.addEventListener("click", async () => {
+        const kid = await G.account.createKid(dev.name, { ...dev });
+        if (!kid) return;
+        deviceProgress = null;
+        await G.portrait.adopt(kid.id);   // фото с этого устройства — вместе с прогрессом
+        useKid(kid);
+        enterGame();
+      });
       box.appendChild(b);
     }
     renderAccount();
