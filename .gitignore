@@ -1,0 +1,17 @@
+# Секреты — никогда в git
+.dev.vars
+.suno.env
+*.env
+
+# Локальная база, кэш и сборки wrangler
+.wrangler/
+build/
+dist/
+
+# Зависимости тестов
+node_modules/
+
+# Исходник NASA 160 МБ (в игре — обрезанное assets/video/apollo11-launch.mp4)
+media-src/apollo11-launch-nasa.mp4
+
+.DS_Store

@@ -1,0 +1,26 @@
+const { chromium } = require("playwright-core");
+(async () => {
+  const b = await chromium.launch({ executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" });
+  const p = await b.newPage({ locale: "ru-RU", viewport: { width: 1366, height: 820 } });
+  await p.goto("http://localhost:8765/");
+  await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.evaluate(() => { G.voice.say = () => new Promise((r) => setTimeout(r, 1500)); G.voice.stop = () => {}; });
+  await p.click("#btn-start"); await p.fill("#inp-name", "Миша"); await p.click("#form-name button");
+  await p.waitForSelector("#briefing:not([hidden])");
+  console.log("briefing next enabled immediately:", !(await p.isDisabled("#bf-next")));
+  while (await p.isVisible("#briefing")) await p.click("#bf-next");
+  await p.waitForTimeout(200);
+  const at = async (sel) => { const r = await p.locator(sel).first().boundingBox(); return [r.x + r.width / 2, r.y + r.height / 2]; };
+  const bubble = () => p.textContent("#spot-text");
+  console.log("step 1:", (await bubble()).slice(0, 40));
+  let [x, y] = await at("#scene .drone"); await p.mouse.click(x, y); await p.waitForTimeout(200);
+  console.log("early click on drone → still step 1:", (await bubble()).startsWith("Проверка систем"));
+  [x, y] = await at("#btn-plan"); await p.mouse.click(x, y); await p.waitForTimeout(200);
+  console.log("click on Plan while locked → opened:", await p.isVisible("#dlg-plan"));
+  await p.waitForTimeout(1500);
+  [x, y] = await at("#btn-plan"); await p.mouse.click(x, y); await p.waitForTimeout(200);
+  console.log("click on Plan after speech → opened:", await p.isVisible("#dlg-plan"));
+  [x, y] = await at("#scene .drone"); await p.mouse.click(x, y); await p.waitForTimeout(3500);
+  console.log("after speech click on drone → next:", (await bubble()).slice(0, 30));
+  await b.close();
+})();

@@ -1,0 +1,13 @@
+# Cloudflare Pages: сайт игры + серверные функции (вход по почте, профили детей).
+name = "saturn5-mission"
+pages_build_output_dir = "build/site"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "saturn5"
+database_id = "3d42c759-41bc-42fb-99ab-57194e761fd4"
+
+# Почта владельца игры (входит по письму и ведёт список семьи) — секрет OWNER_EMAIL в Cloudflare:
+#   npx wrangler pages secret put OWNER_EMAIL --project-name saturn5-mission
+# Локально — строка OWNER_EMAIL=... в .dev.vars.

@@ -1,0 +1,16 @@
+{
+  "name": "tests",
+  "version": "1.0.0",
+  "description": "Подготовка (один раз): `cd tests && npm init -y && npm i playwright-core@1.56` Сервер без функций (обычная игра): `cd .. && python3 -m http.server 8765` Сервер с функциями (вход, фото): `bash tools/deploy-cloudflare.sh` собирает build/site; локально: `npx wrangler@4 pages dev build/site --port 8788` (нужен .dev.vars с DEV_ECHO=1 и OPENAI_API_KEY).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright-core": "1.56"
+  }
+}

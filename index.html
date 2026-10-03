@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Миссия Сатурн-5</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="vendor/codemirror/codemirror.css">
+<link rel="stylesheet" href="css/style.css">
+
+<!-- ═════════ Загрузка ═════════ -->
+<section id="screen-boot" class="screen boot">
+  <div class="boot-card has-art">
+    <div class="boot-main">
+    <h1 class="boot-title" data-en-html="Mission &lt;span&gt;Saturn V&lt;/span&gt;">Миссия <span>Сатурн-5</span></h1>
+    <p class="boot-sub" data-en="Build a real Moon rocket.">Собери настоящую лунную ракету.</p>
+    <div class="fuel" aria-live="polite">
+      <div class="fuel-row"><span id="fuel-stage">ЗАПРАВКА · ГОРЮЧЕЕ RP-1</span><span id="fuel-pct" class="num">0%</span></div>
+      <div class="fuel-bar"><div id="fuel-fill"></div></div>
+    </div>
+    <button id="btn-start" class="btn btn-go" type="button" data-en="Start shift">Начать смену</button>
+    <p class="boot-note" data-en="Turn on the sound.">Включи звук.</p>
+    <p class="boot-account" id="boot-account" hidden></p>
+    </div>
+    <svg id="boot-rocket" class="boot-rocket" role="img" aria-label="Чертёж Сатурна-5 в масштабе" data-en-aria="Saturn V blueprint to scale"></svg>
+  </div>
+</section>
+
+<!-- ═════════ Позывной ═════════ -->
+<section id="screen-name" class="screen boot" hidden>
+  <form id="form-name" class="boot-card" autocomplete="off">
+    <p class="eyebrow" data-en="Operator sign-up">Регистрация оператора</p>
+    <h2 class="boot-title small" data-en="What&#x27;s your name?">Как тебя зовут?</h2>
+    <p class="boot-sub" data-en="Type your name.">Напечатай своё имя.</p>
+    <label class="sr" for="inp-name" data-en="Name">Имя</label>
+    <input id="inp-name" class="callsign-input" maxlength="16" placeholder="Например: Миша" required data-en-ph="For example: Sam">
+    <button class="btn btn-go" type="submit" data-en="Next">Дальше</button>
+  </form>
+</section>
+
+<!-- ═════════ Вход для семьи: по приглашению; владелец игры — по письму ═════════ -->
+<section id="screen-save" class="screen boot" hidden>
+  <form id="form-save" class="boot-card" autocomplete="on">
+    <p class="eyebrow" data-en="For family">Для семьи</p>
+    <h2 class="boot-title small" data-en="Family sign-in">Вход для семьи</h2>
+    <div class="login-step" id="save-step-email">
+      <p class="boot-sub" data-en="Sign-in is by invitation only. Open the invitation link you were sent on this device.">Вход только по приглашению. Откройте на этом устройстве ссылку-приглашение, которую вам прислали.</p>
+      <p class="boot-sub small" data-en="The game owner signs in by email:">Владелец игры входит по почте:</p>
+      <label class="sr" for="inp-save-email" data-en="Email">Почта</label>
+      <input id="inp-save-email" type="email" class="text-input" placeholder="почта владельца" autocomplete="email" required data-en-ph="owner&#x27;s email">
+      <p class="form-error" id="save-error" hidden></p>
+      <button class="btn btn-go" type="submit" id="btn-save-send" data-en="Send link">Прислать ссылку</button>
+    </div>
+    <div class="login-step" id="save-step-sent" hidden>
+      <p class="boot-sub" data-en-html="Email sent to &lt;b id=&quot;save-sent-to&quot;&gt;&lt;/b&gt;. Open it &lt;b&gt;on this device&lt;/b&gt; and tap “Enter the game”. The link works for 20 minutes.">Письмо отправлено на <b id="save-sent-to"></b>. Откройте его <b>на этом устройстве</b> и нажмите «Войти в игру». Ссылка работает 20 минут.</p>
+    </div>
+    <button class="link-btn save-skip" type="button" id="btn-save-skip" data-en="Back">Назад</button>
+  </form>
+</section>
+
+<!-- ═════════ Кто играет (после входа по почте) ═════════ -->
+<section id="screen-profiles" class="screen boot" hidden>
+  <div class="boot-card">
+    <h2 class="boot-title small" data-en="Who&#x27;s playing?">Кто играет?</h2>
+    <div class="profiles" id="profiles"></div>
+    <button class="btn btn-ghost" id="btn-new-kid" type="button" data-en="+ New player">+ Новый игрок</button>
+    <p class="boot-account" id="profiles-account"></p>
+  </div>
+</section>
+
+<!-- ═════════ Главный экран ═════════ -->
+<section id="screen-home" class="screen home" hidden>
+  <div class="home-wrap">
+    <header class="home-head">
+      <div class="home-id">
+        <div class="home-ava" id="home-ava"><img id="home-ava-img" class="zoomable" alt="" tabindex="0" hidden><svg id="home-ava-drone" viewBox="-40 -40 80 80" aria-hidden="true"></svg></div>
+        <div class="home-id-text">
+          <h1 class="home-name" id="home-name"></h1>
+          <p class="home-call num" id="home-call"></p>
+          <button class="link-btn home-photo-btn" id="btn-home-photo" type="button" hidden data-en="Add an astronaut photo">Добавить фото космонавта</button>
+          <p class="home-photo-note" id="home-photo-note" hidden></p>
+          <button class="link-btn home-photo-btn" id="btn-home-redraw" type="button" hidden data-en="Draw the portrait">Нарисовать портрет</button>
+        </div>
+      </div>
+      <div class="home-tools">
+        <button class="btn btn-ghost btn-music" id="btn-music" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg><span>Музыка: вкл</span></button>
+        <button class="btn btn-ghost" id="btn-home-journal" type="button" data-en="Log">Журнал</button>
+        <button class="btn btn-ghost" id="btn-home-profile" type="button" data-en="Profile">Профиль</button>
+      </div>
+    </header>
+    <p class="home-note" id="home-note" hidden></p>
+    <div class="home-go">
+      <button class="btn btn-go home-continue" id="btn-continue" type="button">Продолжить</button>
+      <p class="home-next" id="home-next"></p>
+    </div>
+    <section class="home-block" aria-labelledby="home-h-chapters">
+      <h2 class="home-h" id="home-h-chapters" data-en="Chapters">Главы</h2>
+      <ol class="chapters" id="chapters"></ol>
+    </section>
+    <section class="home-block" aria-labelledby="home-h-medals">
+      <h2 class="home-h" id="home-h-medals" data-en="Medals">Медали</h2>
+      <ul class="medals" id="medals"></ul>
+    </section>
+    <section class="home-block" id="home-photos-block" aria-labelledby="home-h-photos" hidden>
+      <h2 class="home-h" id="home-h-photos" data-en="Expedition photos">Фото экспедиций</h2>
+      <div class="home-photos" id="home-photos"></div>
+    </section>
+  </div>
+</section>
+
+<!-- ═════════ Игра ═════════ -->
+<section id="screen-game" class="screen game" hidden>
+  <header class="topbar">
+    <div class="tb-mission"><span id="tb-num">Миссия 1 из 11</span> · <span id="tb-title">Связь</span></div>
+    <div class="tb-right">
+      <button class="btn btn-ghost btn-music tb-sound" id="btn-sound" type="button" aria-pressed="true" aria-label="Музыка" data-en-aria="Music"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></button>
+      <button class="btn btn-ghost" id="btn-home" type="button" data-en="Home">Главная</button>
+      <button class="btn btn-ghost tb-profile" id="btn-profile" type="button" aria-label="Профиль" data-en-aria="Profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+        <img class="avatar-sm" id="tb-avatar" alt="" hidden>
+        <span id="tb-kid" data-en="Profile">Профиль</span>
+      </button>
+      <button class="btn btn-ghost" id="btn-plan" type="button" data-en="Flight plan">План полёта</button>
+      <button class="btn btn-ghost" id="btn-journal" type="button" data-en="Log">Журнал</button>
+    </div>
+  </header>
+
+  <main class="deck">
+    <div class="bay">
+      <div class="brief">
+        <button class="speak" id="btn-brief-say" type="button" aria-label="Повторить задание" data-en-aria="Repeat the task">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none"/></svg>
+        </button>
+        <div class="brief-text">
+          <p class="brief-main" id="brief-main">Выйди на связь с ЦУП.</p>
+          <code class="brief-code" id="brief-code" hidden></code>
+          <p class="brief-note" id="brief-note" hidden></p>
+          <p class="brief-keys" id="brief-keys" hidden></p>
+          <ol class="checklist" id="checklist" hidden></ol>
+        </div>
+        <button class="btn btn-ghost btn-sm brief-again" id="btn-intro" type="button" data-en="Briefing">Инструктаж</button>
+      </div>
+      <div class="bay-view">
+        <svg id="scene" class="scene" role="img" aria-label="Монтажный корпус: поле с дроном и деталями" data-en-aria="Assembly building: grid with the drone and parts"></svg>
+        <aside class="rocket-panel" aria-label="Сатурн-5 в масштабе" data-en-aria="Saturn V to scale">
+          <p class="rp-title" data-en="Saturn V">Сатурн-5</p>
+          <svg id="rocket" class="rocket-svg" role="img" aria-label="Ракета: собранные ступени" data-en-aria="Rocket: installed stages"></svg>
+          <p class="rp-height num" data-en-html="&lt;b id=&quot;rp-h&quot;&gt;0&lt;/b&gt; m&lt;br&gt;of 110.6"><b id="rp-h">0</b> м<br>из 110,6</p>
+        </aside>
+      </div>
+      <ol class="radio" id="radio" aria-live="polite"></ol>
+    </div>
+
+    <div class="console">
+      <div class="console-head">
+        <span data-en="Drone program">Программа дрона</span>
+        <span class="mem num" id="mem">ПАМЯТЬ 0/5</span>
+      </div>
+      <div class="editor-wrap">
+        <div id="editor" class="editor"></div>
+        <p id="editor-ph" class="editor-ph" data-en="type your program here">пиши программу здесь</p>
+      </div>
+      <div class="console-meta">
+        <span class="kbd" id="kbd" hidden>Внутри кавычек — <b>русские буквы</b></span>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div class="actions">
+        <button class="btn btn-go" id="btn-run" type="button" data-en="Run">Пуск</button>
+        <button class="btn btn-ghost" id="btn-reset" type="button" data-en="Reset">Сброс</button>
+        <button class="btn btn-ghost" id="btn-hint" type="button" data-en="Hint">Подсказка</button>
+      </div>
+      <div class="hint" id="hint" hidden>
+        <p class="hint-step num" id="hint-step">ПОДСКАЗКА 1/3</p>
+        <p id="hint-text"></p>
+        <pre id="hint-code" hidden></pre>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ═════════ Окна ═════════ -->
+<div class="overlay" id="dlg-success" hidden>
+  <div class="dialog" role="dialog" aria-labelledby="succ-title">
+    <p class="eyebrow num" id="succ-num">МИССИЯ 1 ВЫПОЛНЕНА</p>
+    <h2 id="succ-title" class="dlg-title">Связь установлена</h2>
+    <p class="dlg-text succ-text" id="succ-text"></p>
+    <div class="fact">
+      <p class="fact-label" data-en="Flight log · new entry">Бортовой журнал · новая запись</p>
+      <p class="fact-big" id="succ-fact-title">110 метров</p>
+      <p class="fact-text" id="succ-fact-text"></p>
+      <figure class="fact-photo" id="succ-photo" hidden>
+        <img id="succ-photo-img" alt="" loading="lazy">
+        <figcaption><span id="succ-photo-cap"></span> <span class="credit" data-en="Photo: NASA">Фото: NASA</span></figcaption>
+      </figure>
+    </div>
+<div class="dlg-actions">
+      <button class="btn btn-go" id="btn-next" type="button">Следующая миссия</button>
+      <button class="btn btn-ghost" id="btn-fact-say" type="button" data-en="Read aloud">Прочитать вслух</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="dlg-profile" hidden>
+  <form class="dialog" id="form-profile" role="dialog" aria-labelledby="profile-title" autocomplete="off">
+    <div class="dlg-head"><h2 id="profile-title" class="dlg-title" data-en="Profile">Профиль</h2><button class="btn btn-ghost" data-close type="button" data-en="Close">Закрыть</button></div>
+    <div class="pf-main" id="pf-main">
+      <div class="pf-photo" id="pf-photo" hidden>
+        <img id="pf-avatar" class="avatar-lg zoomable" alt="" tabindex="0" hidden>
+        <div class="pf-photo-body">
+          <span class="field-label" data-en="Astronaut photo">Фото космонавта</span>
+          <p class="pf-photo-note" id="pf-photo-note"></p>
+          <div class="pf-photo-actions">
+            <label class="btn btn-ghost btn-sm file-btn"><span id="pf-photo-pick-text">Добавить фото</span><input type="file" accept="image/*" id="pf-file" hidden></label>
+            <button class="btn btn-go btn-sm" id="pf-photo-redraw" type="button" hidden data-en="Draw the portrait">Нарисовать портрет</button>
+            <button class="btn btn-ghost btn-sm btn-danger" id="pf-photo-del" type="button" hidden data-en="Delete photo">Удалить фото</button>
+          </div>
+        </div>
+      </div>
+      <label class="field" for="inp-pf-name" data-en="Name"><span>Имя</span><input id="inp-pf-name" class="text-input" maxlength="16" required></label>
+      <p class="dlg-text num" id="pf-progress">Пройдено 0 из 11</p>
+      <div class="pf-account" id="pf-account" hidden>
+        <span class="field-label" data-en="Grown-up's email">Почта взрослого</span>
+        <p class="pf-account-line"><span id="pf-email"></span> <button class="link-btn" type="button" id="btn-pf-logout" data-en="Sign out">Выйти</button></p>
+        <p class="pf-account-line" id="pf-noemail" hidden><span data-en="Progress is kept in this browser.">Прогресс хранится в этом браузере.</span> <button class="link-btn" type="button" id="btn-pf-login" data-en="Family sign-in">Вход для семьи</button></p>
+        <div class="pf-family" id="pf-family" hidden>
+          <span class="field-label" data-en="Family">Семья</span>
+          <p class="pf-family-note" data-en="Only these emails can sign in. Add an email to get an invitation link, then send it to your relative.">Входить могут только эти почты. Добавьте почту — появится ссылка-приглашение, перешлите её родственнику.</p>
+          <ul class="pf-family-list" id="pf-family-list"></ul>
+          <div class="pf-family-add">
+            <label class="sr" for="inp-family-email" data-en="Relative&#x27;s email">Почта родственника</label>
+            <input id="inp-family-email" type="text" inputmode="email" class="text-input" placeholder="почта родственника" autocomplete="off" data-en-ph="relative&#x27;s email">
+            <button class="btn btn-ghost btn-sm" type="button" id="btn-family-add" data-en="Add">Добавить</button>
+          </div>
+          <p class="form-error" id="family-error" hidden></p>
+          <div class="pf-invite" id="pf-invite" hidden>
+            <p class="pf-family-note" data-en-html="Link for &lt;b id=&quot;pf-invite-to&quot;&gt;&lt;/b&gt;: works once, for 7 days. Open it on the device the child plays on.">Ссылка для <b id="pf-invite-to"></b>: работает один раз, 7 дней. Открыть её нужно на устройстве, где играет ребёнок.</p>
+            <input id="pf-invite-link" class="text-input" readonly aria-label="Ссылка-приглашение" data-en-aria="Invitation link">
+            <div class="pf-photo-actions">
+              <button class="btn btn-go btn-sm" type="button" id="btn-invite-copy" data-en="Copy">Скопировать</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="btn-invite-share" hidden data-en="Share">Поделиться</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dlg-actions">
+        <button class="btn btn-go" type="submit" data-en="Save">Сохранить</button>
+        <button class="btn btn-ghost" type="button" id="btn-pf-switch" hidden data-en="Switch player">Сменить игрока</button>
+      </div>
+      <div class="pf-danger">
+        <button class="btn btn-ghost btn-sm" type="button" id="btn-pf-restart" data-en="Start over">Начать заново</button>
+        <button class="btn btn-ghost btn-sm btn-danger" type="button" id="btn-pf-delete" data-en="Delete profile">Удалить профиль</button>
+      </div>
+    </div>
+    <div class="pf-confirm" id="pf-confirm" hidden>
+      <p class="dlg-text" id="pf-confirm-text"></p>
+      <div class="dlg-actions">
+        <button class="btn btn-danger-solid" type="button" id="btn-pf-yes">Да</button>
+        <button class="btn btn-ghost" type="button" id="btn-pf-no" data-en="Cancel">Отмена</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="overlay" id="dlg-plan" hidden>
+  <div class="dialog wide" role="dialog" aria-labelledby="plan-title">
+    <div class="dlg-head"><h2 id="plan-title" class="dlg-title" data-en="Flight plan · Chapter 1">План полёта · Глава 1</h2><button class="btn btn-ghost" data-close type="button" data-en="Close">Закрыть</button></div>
+    <ol class="plan" id="plan-list"></ol>
+  </div>
+</div>
+
+<div class="overlay" id="dlg-journal" hidden>
+  <div class="dialog wide" role="dialog" aria-labelledby="journal-title">
+    <div class="dlg-head"><h2 id="journal-title" class="dlg-title" data-en="Flight log">Бортовой журнал</h2><button class="btn btn-ghost" data-close type="button" data-en="Close">Закрыть</button></div>
+    <p class="journal-status" id="journal-status"></p>
+    <div id="journal-patch" class="journal-patch" hidden></div>
+    <figure class="crew-photo" id="journal-photo" hidden><img id="journal-photo-img" class="zoomable" alt="" tabindex="0"><figcaption id="journal-photo-cap"></figcaption></figure>
+    <ol class="journal" id="journal-list"></ol>
+    <p class="journal-empty" id="journal-empty" data-en="No entries yet. Every mission you complete adds a real fact about Saturn V.">Записей пока нет. Каждая выполненная миссия добавляет настоящий факт о Сатурне-5.</p>
+  </div>
+</div>
+
+<div class="overlay" id="dlg-shift" hidden>
+  <div class="dialog" role="dialog" aria-labelledby="shift-title">
+    <p class="eyebrow" data-en="Houston · end of shift">ЦУП · конец смены</p>
+    <h2 id="shift-title" class="dlg-title" data-en="Shift over">Смена окончена</h2>
+    <p class="dlg-text" id="shift-text">Пять миссий за смену — хорошая работа. Ракета подождёт до завтра.</p>
+<div class="dlg-actions">
+      <button class="btn btn-go" id="btn-shift-end" type="button" data-en="End shift">Завершить смену</button>
+      <button class="btn btn-ghost" id="btn-shift-more" type="button" data-en="One more mission">Ещё одна миссия</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="dlg-crew" hidden>
+  <div class="dialog" role="dialog" aria-labelledby="crew-title">
+    <p class="eyebrow" data-en="Houston · before launch">ЦУП · перед стартом</p>
+    <h2 id="crew-title" class="dlg-title" data-en="Crew photo">Фото экипажа</h2>
+    <p class="dlg-text" data-en="Before launch, the crew takes a photo by the rocket. Want a photo of you and Pip in the log — in a spacesuit by Saturn V? Ask a grown-up to help.">Перед стартом экипаж фотографируется у ракеты. Хочешь, в журнале будет твоё фото с Пипом — в скафандре у Сатурна-5? Попроси взрослого помочь.</p>
+    <div class="crew-preview" id="crew-preview" hidden><img id="crew-img" alt=""></div>
+    <p class="crew-consent" id="crew-consent" hidden></p>
+    <div class="dlg-actions">
+      <label class="btn btn-go file-btn" id="crew-pick"><span id="crew-pick-text" data-en="Take a photo">Сделать фото</span><input type="file" accept="image/*" id="crew-file" hidden></label>
+      <button class="btn btn-go" id="crew-send" type="button" hidden data-en="Send">Отправить</button>
+      <button class="btn btn-ghost" id="crew-skip" type="button" data-en="No photo">Без фото</button>
+    </div>
+    <p class="crew-note" data-en="Without a photo, the log will show just the rocket. You can add a photo later in the profile.">Без фото в журнале будет только ракета. Добавить фото можно потом в профиле.</p>
+  </div>
+</div>
+
+<!-- Фото космонавта с главного экрана: выбрать → (шлем: подогнать лицо) → готово -->
+<div class="overlay" id="dlg-photo" hidden>
+  <div class="dialog" role="dialog" aria-labelledby="photo-title">
+    <p class="eyebrow" data-en="For grown-ups">Для взрослых</p>
+    <h2 id="photo-title" class="dlg-title" data-en="Astronaut photo">Фото космонавта</h2>
+    <div class="login-step" id="photo-step-pick">
+      <p class="dlg-text" data-en="With a photo you get an avatar: you in a spacesuit with Pip. And after every chapter — an expedition photo in the log. Ask a grown-up to help.">С фото будет аватарка: ты в скафандре и Пип. А после каждой главы — фото экспедиции в журнале. Попроси взрослого помочь.</p>
+      <div class="crew-preview" id="photo-preview" hidden><img id="photo-img" alt=""></div>
+      <p class="crew-consent" id="photo-consent"></p>
+      <div class="dlg-actions">
+        <label class="btn btn-go file-btn" id="photo-pick"><span id="photo-pick-text" data-en="Choose a photo">Выбрать фото</span><input type="file" accept="image/*" id="photo-file" hidden></label>
+        <button class="btn btn-go" id="photo-send" type="button" hidden data-en="Send">Отправить</button>
+        <button class="btn btn-ghost" id="photo-cancel" type="button" data-en="Cancel">Отмена</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="dlg-patch" hidden>
+  <div class="dialog" role="dialog" aria-labelledby="patch-title">
+    <p class="eyebrow" data-en="Chapter 1 complete">Глава 1 пройдена</p>
+    <h2 id="patch-title" class="dlg-title" data-en="Expedition patch">Нашивка экспедиции</h2>
+    <div class="patch-wrap" id="patch-big"></div>
+    <figure class="crew-photo" id="patch-photo" hidden>
+      <img id="patch-photo-img" class="zoomable" alt="" tabindex="0">
+      <figcaption id="patch-photo-cap"></figcaption>
+    </figure>
+    <p class="dlg-text" data-en="Saturn V is built and launched. Next chapter: Earth orbit.">Сатурн-5 собран и запущен. Следующая глава — орбита Земли.</p>
+    <div class="dlg-actions"><button class="btn btn-go" id="btn-patch-ok" type="button" data-en="Home">На главную</button></div>
+  </div>
+</div>
+
+<!-- Инструктаж перед каждой миссией: сначала задание, потом новое на образце, потом «Мой ход» -->
+<div class="overlay intro" id="intro" hidden>
+  <div class="dialog intro-card" role="dialog" aria-labelledby="in-title">
+    <p class="eyebrow num" id="in-step">МИССИЯ 1 · ИНСТРУКТАЖ 1 / 2</p>
+    <div class="in-grid">
+      <div class="in-text">
+        <h2 class="in-title" id="in-title">Выйди на связь с ЦУП.</h2>
+        <div class="in-task-code" id="in-task-code" hidden>
+          <code id="in-task-code-text"></code>
+          <p id="in-task-note"></p>
+        </div>
+        <div class="in-example" id="in-example" hidden>
+          <ol class="in-code" id="in-code"></ol>
+          <p class="in-words" id="in-words" hidden></p>
+          <p class="in-caption" id="in-caption"></p>
+        </div>
+      </div>
+      <svg id="intro-scene" class="in-scene" role="img" aria-label="Поле миссии" data-en-aria="Mission grid"></svg>
+    </div>
+    <div class="dlg-actions">
+      <button class="btn btn-go" id="in-next" type="button">Дальше</button>
+      <button class="btn btn-ghost" id="in-replay" type="button" data-en="▶ Watch again">▶ Посмотреть снова</button>
+      <button class="btn btn-ghost btn-listen" id="in-say" type="button" data-en-html="&lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M4 9h4l5-4v14l-5-4H4z&quot;/&gt;&lt;path d=&quot;M16 8.5a5 5 0 0 1 0 7&quot; fill=&quot;none&quot;/&gt;&lt;/svg&gt;Listen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none"/></svg>Прослушать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Брифинг: зачем всё это и кто чем управляет -->
+<div class="overlay briefing" id="briefing" hidden>
+  <div class="dialog brief-card" role="dialog" aria-labelledby="bf-text">
+    <p class="eyebrow num" id="bf-step">БРИФИНГ · 1 / 4</p>
+    <div class="bf-art" id="bf-art"></div>
+    <p class="bf-text" id="bf-text"></p>
+    <div class="dlg-actions">
+      <button class="btn btn-go" id="bf-next" type="button">Дальше</button>
+      <button class="btn btn-ghost btn-listen" id="bf-say" type="button" data-en-html="&lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;&lt;path d=&quot;M4 9h4l5-4v14l-5-4H4z&quot;/&gt;&lt;path d=&quot;M16 8.5a5 5 0 0 1 0 7&quot; fill=&quot;none&quot;/&gt;&lt;/svg&gt;Listen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none"/></svg>Прослушать</button>
+    </div>
+  </div>
+</div>
+
+<!-- Затемнение для проверки систем: светлое окно вокруг нужной кнопки -->
+<div class="ob-shade" id="ob-shade" hidden>
+  <div class="sh" data-side="t"></div><div class="sh" data-side="b"></div>
+  <div class="sh" data-side="l"></div><div class="sh" data-side="r"></div>
+  <div class="sh-lid" id="sh-lid"></div>
+  <div class="spot-ring" id="spot-ring"></div>
+</div>
+<div class="spot-bubble" id="spot-bubble" hidden>
+  <p class="spot-wait" id="spot-wait" data-en-html="&lt;span class=&quot;bars&quot; aria-hidden=&quot;true&quot;&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;i&gt;&lt;/i&gt;&lt;/span&gt;Listen to Houston"><span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>Слушай ЦУП</p>
+  <p id="spot-text"></p>
+  <p class="spot-keys" id="spot-keys"></p>
+</div>
+
+<!-- Фото во весь экран: по нажатию на аватарку или фото экспедиции -->
+<!-- Фото в шлеме: взрослый подгоняет лицо в стекле (js/helmet.js). Фото остаётся на устройстве. -->
+<div class="overlay" id="dlg-helmet" hidden>
+  <div class="dialog" role="dialog" aria-labelledby="helmet-title">
+    <p class="eyebrow" data-en="For grown-ups">Для взрослых</p>
+    <h2 id="helmet-title" class="dlg-title" data-en="Face in the helmet">Лицо в шлеме</h2>
+    <p class="dlg-text" data-en="Drag the photo so the face fits the helmet glass.">Передвиньте фото, чтобы лицо было в стекле шлема.</p>
+    <canvas id="helmet-canvas" class="helmet-canvas" width="640" height="640"></canvas>
+    <label class="helmet-zoom"><span data-en="Size">Размер</span><input type="range" id="helmet-zoom" min="1" max="4" step="0.01" value="1.25"></label>
+    <p class="crew-consent" data-en="The photo stays on this device and isn't sent anywhere.">Фото остаётся на этом устройстве и никуда не отправляется.</p>
+    <div class="dlg-actions">
+      <button class="btn btn-go" id="helmet-ok" type="button" data-en="Done">Готово</button>
+      <button class="btn btn-ghost" id="helmet-cancel" type="button" data-en="Cancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay viewer" id="dlg-viewer" hidden>
+  <figure class="viewer-fig">
+    <img id="viewer-img" alt="">
+    <figcaption id="viewer-cap"></figcaption>
+  </figure>
+  <button class="btn btn-ghost viewer-close" data-close type="button" data-en="Close">Закрыть</button>
+</div>
+
+<div class="launch" id="launch" hidden>
+  <video id="launch-video" class="launch-video" src="assets/video/apollo11-launch.mp4" poster="assets/video/apollo11-launch.jpg" muted playsinline preload="none" hidden></video>
+  <svg id="launch-svg" class="launch-svg" viewBox="-60 -150 120 170" preserveAspectRatio="xMidYMax meet" aria-hidden="true"></svg>
+  <p class="launch-caption" id="launch-caption">ЗАЖИГАНИЕ</p>
+  <p class="launch-credit" id="launch-credit" hidden data-en="Video: NASA · Apollo 11 launch, July 16, 1969">Видео: NASA · старт «Аполлона-11», 16 июля 1969</p>
+</div>
+
+
+<script src="vendor/codemirror/codemirror.js"></script>
+<script src="vendor/codemirror/python.js"></script>
+<script src="vendor/pyodide/pyodide.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/errors.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/python.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/world.js"></script>
+<script src="js/account.js"></script>
+<script src="js/helmet.js"></script>
+<script src="js/portrait.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

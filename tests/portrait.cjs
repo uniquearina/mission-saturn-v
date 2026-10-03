@@ -1,0 +1,42 @@
+const { chromium } = require("playwright-core");
+// Почта владельца — из OWNER_EMAIL или .dev.vars (в репозитории её нет).
+const OWNER = process.env.OWNER_EMAIL || (require("fs").readFileSync(require("path").join(__dirname, "../.dev.vars"), "utf8").match(/^OWNER_EMAIL=(.+)$/m) || [])[1];
+const OUT = process.env.S;
+(async () => {
+  const b = await chromium.launch({ executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" });
+  const p = await b.newPage({ locale: "ru-RU", viewport: { width: 1366, height: 820 } });
+  p.on("pageerror", (e) => console.log("PAGEERROR", e.message));
+  await p.goto("http://localhost:8788/");
+  await p.evaluate(() => { localStorage.clear(); localStorage.setItem("saturn5.progress.v1", JSON.stringify({ v: 2, name: "Миша", callsign: "Кекс", done: [1,2,3,4,5,6,7,8,9,10], current: 11, onboarded: true })); });
+  await p.reload(); await p.waitForFunction(() => G.python.ready, null, { timeout: 60000 });
+  await p.evaluate(() => G.voice.setMuted(true));
+  // ИИ-портрет — только семье: сначала вход владельца (OWNER_EMAIL), письмо приходит в G.devLink.
+  await p.evaluate(async () => { const r = await G.account.requestLink(OWNER); G.devLink = r.data.devLink; });
+  await p.goto(await p.evaluate(() => G.devLink)); await p.waitForFunction(() => G.python.ready && G.account.email, null, { timeout: 60000 });
+  await p.evaluate(() => G.voice.setMuted(true));
+  await p.click("#btn-start");
+  await p.waitForSelector("#dlg-crew:not([hidden])");
+  await p.screenshot({ path: OUT + "/crew-1.png" });
+  await p.setInputFiles("#crew-file", OUT + "/face.jpg");
+  await p.waitForSelector("#crew-send:not([hidden])");
+  await p.screenshot({ path: OUT + "/crew-2.png" });
+  await p.click("#crew-send");
+  const t0 = Date.now();
+  await p.waitForSelector("#intro:not([hidden])");
+  console.log("crew sent → intro, pending:", await p.evaluate(() => [G.portrait.isPending("avatar"), G.portrait.isPending("ch1")]));
+  await p.click("#in-next"); await p.waitForFunction(() => !document.getElementById("in-next").disabled, null, { timeout: 90000 }); await p.click("#in-next");
+  await p.evaluate(() => G.debug.editor.set("for i in range(10, 0, -1):\n    print(i)\nlaunch()\n"));
+  await p.click("#btn-run");
+  await p.waitForSelector("#dlg-patch:not([hidden])", { timeout: 90000 });
+  console.log("patch shown at", Math.round((Date.now() - t0) / 1000), "s; photo:", await p.textContent("#patch-photo-cap"));
+  await p.screenshot({ path: OUT + "/patch-pending.png" });
+  await p.waitForFunction(() => !document.getElementById("patch-photo-img").hidden && document.getElementById("patch-photo-img").src.startsWith("data:"), null, { timeout: 120000 }).catch(() => {});
+  console.log("photo ready at", Math.round((Date.now() - t0) / 1000), "s:", await p.textContent("#patch-photo-cap"));
+  await p.screenshot({ path: OUT + "/patch-photo.png" });
+  await p.click("#btn-patch-ok"); await p.waitForTimeout(400); await p.click("#dlg-journal [data-close]");
+  await p.waitForFunction(() => G.portrait.get().avatar, null, { timeout: 90000 }).catch(() => {});
+  await p.click("#btn-profile"); await p.waitForTimeout(400);
+  await p.screenshot({ path: OUT + "/profile-photo.png" });
+  console.log("avatar in topbar:", await p.isVisible("#tb-avatar"));
+  await b.close();
+})().catch((e) => { console.error("ERR", e.message); process.exit(1); });
