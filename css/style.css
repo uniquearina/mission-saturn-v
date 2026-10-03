@@ -591,8 +591,8 @@ kbd {
 .crew-consent { margin: 0; font-size: 14px; color: var(--ink-dim); }
 .crew-note { margin: 0; font-size: 14px; color: var(--ink-dim); }
 .crew-photo { margin: 0; display: grid; gap: 6px; }
-.crew-photo img { width: 100%; max-height: 340px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line-strong); }
-.crew-photo figcaption { font: 600 14px var(--f-body); color: var(--dsky); }
+.crew-photo img { display: block; justify-self: center; width: auto; max-width: 100%; height: auto; max-height: min(60vh, 520px); border-radius: 8px; border: 1px solid var(--line-strong); }   /* фото квадратное: показываем целиком, без обрезки */
+.crew-photo figcaption { font: 600 14px var(--f-body); color: var(--dsky); text-align: center; }
 .crew-photo.is-pending figcaption { color: var(--amber); animation: goal 1.6s ease-in-out infinite; }
 .pf-photo { display: flex; gap: 14px; align-items: flex-start; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
 .pf-photo-body { display: grid; gap: 6px; min-width: 0; }
