@@ -1,30 +1,9 @@
 // Редактор кода (CodeMirror 5) и «умная клавиатура».
-// Буквы определяются по физической клавише (event.code), а не по раскладке:
-// вне кавычек всегда латиница, внутри кавычек и в комментариях — кириллица.
+// Буквы — как в раскладке системы: ребёнок сам переключает её (в коде — английская, в кавычках — русская).
+// Игра только подсказывает, если раскладка не та (layoutHint), ставит пары скобок и кавычек и убирает отступы.
 (function () {
   const G = (window.G = window.G || {});
 
-  // [без Shift, с Shift] для латиницы и для кириллицы (ЙЦУКЕН).
-  const LAT = {}, RUS = {};
-  "qwertyuiopasdfghjklzxcvbnm".split("").forEach((c) => {
-    LAT["Key" + c.toUpperCase()] = [c, c.toUpperCase()];
-  });
-  const ruLetters = {
-    KeyQ: "й", KeyW: "ц", KeyE: "у", KeyR: "к", KeyT: "е", KeyY: "н", KeyU: "г", KeyI: "ш",
-    KeyO: "щ", KeyP: "з", BracketLeft: "х", BracketRight: "ъ", KeyA: "ф", KeyS: "ы", KeyD: "в",
-    KeyF: "а", KeyG: "п", KeyH: "р", KeyJ: "о", KeyK: "л", KeyL: "д", Semicolon: "ж", Quote: "э",
-    KeyZ: "я", KeyX: "ч", KeyC: "с", KeyV: "м", KeyB: "и", KeyN: "т", KeyM: "ь", Comma: "б",
-    Period: "ю", Backquote: "ё",
-  };
-  for (const [code, ch] of Object.entries(ruLetters)) RUS[code] = [ch, ch.toUpperCase()];
-
-  const LAT_SYM = {
-    Digit1: ["1", "!"], Digit2: ["2", '"'], Digit3: ["3", "#"], Digit4: ["4", "$"], Digit5: ["5", "%"],
-    Digit6: ["6", ":"], Digit7: ["7", "&"], Digit8: ["8", "*"], Digit9: ["9", "("], Digit0: ["0", ")"],
-    Minus: ["-", "_"], Equal: ["=", "+"], BracketLeft: ["[", "{"], BracketRight: ["]", "}"],
-    Backslash: ["\\", "|"], Semicolon: [";", ":"], Quote: ["'", '"'], Comma: [",", "<"],
-    Period: [".", ">"], Slash: ["/", "?"], Backquote: ["`", "~"], Space: [" ", " "],
-  };
   const PAIRS = { "(": ")", '"': '"', "'": "'" };
 
   // Где курсор: в коде, в строке (внутри кавычек) или в комментарии.
@@ -41,30 +20,10 @@
     return quote ? "string" : "code";
   }
 
-  // Символы, которые на латинской раскладке получаются только с Shift.
-  const SHIFTED = new Set('{}:"<>~?'.split(""));
-
-  // Если система уже дала «правильный» символ — берём его как есть;
-  // переводим по физической клавише, только когда раскладка не та.
-  function charFor(e, ctx) {
+  // Символ нажатой клавиши — ровно тот, что дала системная раскладка.
+  function charFor(e) {
     const k = e.key;
-    if (!k || k.length !== 1) return null;
-    const ascii = k.charCodeAt(0) < 128;
-    const isLetter = k.toLowerCase() !== k.toUpperCase();
-    const upper = isLetter ? k !== k.toLowerCase() : e.shiftKey || SHIFTED.has(k);
-
-    if (ctx === "code") {
-      if (ascii) return k === "@" ? '"' : k === "^" ? ":" : k;
-      const m = LAT[e.code] || LAT_SYM[e.code];   // русская раскладка → латиница
-      return m ? m[upper ? 1 : 0] : null;
-    }
-    // Внутри кавычек и в комментариях. Кириллица по физической клавише — только в русской версии.
-    if (!ascii || G.lang !== "ru") return k;
-    if (e.code === "Quote" && k === '"') return '"';  // Shift+' остаётся кавычкой
-    if (RUS[e.code]) return RUS[e.code][upper ? 1 : 0];
-    if (e.code === "Slash") return upper ? "," : ".";
-    if (k === "@") return '"';
-    return k;
+    return k && k.length === 1 ? k : null;
   }
 
   function create(host, { onRun, onChange } = {}) {
@@ -120,7 +79,7 @@
         return;
       }
 
-      const ch = charFor(e, ctx);
+      const ch = charFor(e);
       if (ch === null) return;
       e.preventDefault();
 
@@ -205,9 +164,21 @@
       usedLines() {
         return cm.getValue().split("\n").filter((l) => l.trim() && !l.trim().startsWith("#")).length;
       },
-      keyboardMode() {
-        const cur = cm.getCursor();
-        return context(cm.getLine(cur.line), cur.ch) === "code" ? "EN" : "РУ";
+      // Подсказка про раскладку для строки с курсором:
+      // "en-warn" — в коде русские буквы; "ru-warn" — в кавычках английские; "ru" — курсор в кавычках.
+      layoutHint() {
+        const cur = cm.getCursor(), text = cm.getLine(cur.line);
+        let code = "", str = "", q = null;
+        for (const c of text) {
+          if (q) { if (c === q) q = null; else str += c; }
+          else if (c === '"' || c === "'") q = c;
+          else if (c === "#") break;
+          else code += c;
+        }
+        if (/[а-яё]/i.test(code)) return "en-warn";
+        const inStr = context(text, cur.ch) === "string";
+        if (/[a-z]/i.test(str) && G.lang === "ru") return "ru-warn";
+        return inStr && G.lang === "ru" ? "ru" : null;
       },
     };
 

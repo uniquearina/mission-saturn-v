@@ -71,12 +71,9 @@ const SOL = {
   console.log("M0 done →", await page.textContent("#tb-num"), await brief());
   await passIntro("in1");
 
-  // M1: печатаем по-настоящему, через физические клавиши (раскладка не важна).
+  // M1: печатаем по-настоящему (раскладка — системная).
   await page.click(".tile"); // вставляет print("")
-  for (const k of ["KeyW", "KeyE", "KeyG"]) await page.keyboard.press("Shift+" + k);
-  await page.keyboard.press("Shift+Slash"); // запятая внутри кавычек
-  await page.keyboard.press("Space");
-  for (const k of ["KeyG", "KeyH", "KeyB", "Backquote", "KeyV"]) await page.keyboard.press(k);
+  await page.keyboard.type("Houston, come in");
   await page.evaluate(() => G.debug.editor.set('print("Houston, come in")'));
   console.log("M1 code:", JSON.stringify(await page.evaluate(() => G.debug.editor.value)));
   await runAndWait();

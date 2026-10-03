@@ -10,7 +10,7 @@
   const SAY = {
     print: "принт", right: "райт", left: "лефт", up: "ап", down: "даун",
     grab: "грэб", drop: "дроп", launch: "лонч", range: "рэйндж", for: "фор",
-    "S-IVB": "эс четыре бэ", "S-IC": "эс один си", "S-II": "эс два", VAB: "ви эй би",
+    "S-IVB": "эс четыре би", "S-IC": "эс один си", "S-II": "эс два", VAB: "ви эй би",
     Enter: "энтер", Shift: "шифт", in: "ин", i: "и",
   };
 
@@ -77,7 +77,7 @@
       case "name": {
         const name = err.name;
         if (/[а-яё]/i.test(name))
-          return msg(L(`Русские буквы — только внутри кавычек.${t}`, `Non-English letters go only inside quotes.${t}`), n);
+          return msg(L(`Команды пишутся английскими буквами. Переключи раскладку.${t}`, `Commands use English letters. Switch the keyboard layout.${t}`), n);
         const guess = closest(name);
         if (guess && guess === name.toLowerCase() && guess !== name)
           return msg(L(`Python различает большие и маленькие буквы: пиши ${guess}.${t}`, `Python cares about capital letters: write ${guess}.${t}`), n);

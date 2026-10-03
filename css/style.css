@@ -196,6 +196,7 @@ kbd {
 .mem { color: var(--dsky); }
 .mem.is-over { color: var(--alert); }
 .kbd b { color: var(--dsky); }
+.kbd.is-warn, .kbd.is-warn b { color: var(--amber); }
 .tip { text-transform: none; letter-spacing: 0.02em; }
 .editor-wrap { position: relative; flex: 1; min-height: 190px; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; }
 .editor { position: absolute; inset: 0; }

@@ -71,12 +71,10 @@ const SOL = {
   console.log("M0 done →", await page.textContent("#tb-num"), await brief());
   await passIntro("in1");
 
-  // M1: печатаем по-настоящему, через физические клавиши (раскладка не важна).
+  // M1: печатаем по-настоящему. Раскладка — системная: в кавычках печатаем русскими буквами.
   await page.click(".tile"); // вставляет print("")
-  for (const k of ["KeyW", "KeyE", "KeyG"]) await page.keyboard.press("Shift+" + k);
-  await page.keyboard.press("Shift+Slash"); // запятая внутри кавычек
-  await page.keyboard.press("Space");
-  for (const k of ["KeyG", "KeyH", "KeyB", "Backquote", "KeyV"]) await page.keyboard.press(k);
+  await page.keyboard.type("ЦУП, приём");
+  console.log("kbd hint in quotes:", await page.isVisible("#kbd") && (await page.textContent("#kbd")));
   console.log("M1 code:", JSON.stringify(await page.evaluate(() => G.debug.editor.value)));
   await runAndWait();
   console.log("M1:", await page.isVisible("#dlg-success"), "|", await radio());

@@ -1272,7 +1272,15 @@
     const mem = $("mem");
     mem.textContent = L(`СТРОК ${used} из ${mission.maxLines}`, `LINES ${used} of ${mission.maxLines}`);
     mem.classList.toggle("is-over", used > mission.maxLines);
-    $("kbd").hidden = G.lang !== "ru" || editor.keyboardMode() !== "РУ";
+    // Раскладка — системная: подсказываем, если буквы не те.
+    const hint = editor.layoutHint();
+    $("kbd").hidden = !hint;
+    $("kbd").classList.toggle("is-warn", !!hint && hint !== "ru");
+    if (hint) $("kbd").innerHTML = {
+      ru: L("Внутри кавычек — <b>русские буквы</b>", ""),
+      "ru-warn": L("Внутри кавычек — <b>русские буквы</b>. Переключи раскладку.", ""),
+      "en-warn": L("Команды — <b>английскими буквами</b>. Переключи раскладку.", "Commands use <b>English letters</b>. Switch the keyboard layout."),
+    }[hint];
     $("editor-ph").hidden = editor.value.trim() !== "";
     if (ob && /^\s*left\(\)\s*$/m.test(editor.value)) checkDone("keys");
   }
