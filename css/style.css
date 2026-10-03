@@ -301,6 +301,8 @@ kbd {
 }
 .dialog.wide { width: min(780px, 100%); }
 .dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+/* Шапка с «Закрыть» остаётся сверху, когда окно прокручивается. */
+.dlg-head { position: sticky; top: -26px; z-index: 2; margin: -26px -26px 0; padding: 26px 26px 12px; background: var(--panel); border-radius: 12px 12px 0 0; }
 .dlg-title { margin: 0; font: 700 clamp(22px, 3vw, 28px)/1.15 var(--f-display); text-wrap: balance; }
 .dlg-text { margin: 0; font-size: 18px; color: var(--ink-dim); }
 .dlg-actions { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -491,6 +493,7 @@ kbd {
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .actions .btn-go { grid-column: 1 / -1; }
   .dialog { padding: 18px; gap: 14px; }
+  .dlg-head { top: -18px; margin: -18px -18px 0; padding: 18px 18px 10px; }
   .in-scene { max-height: 34vh; }
   .in-code code { font-size: 22px; }
   .in-note, .in-caption, .in-words { font-size: 16px; }

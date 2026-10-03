@@ -1433,6 +1433,12 @@
   function close(id) { $(id).hidden = true; }
   document.querySelectorAll("[data-close]").forEach((b) =>
     b.addEventListener("click", () => close(b.closest(".overlay").id)));
+  // Журнал и план полёта закрываются нажатием мимо окна (нажали и отпустили именно на затемнении).
+  for (const id of ["dlg-journal", "dlg-plan"]) {
+    let downOnShade = false;
+    $(id).addEventListener("pointerdown", (e) => { downOnShade = e.target.id === id; });
+    $(id).addEventListener("click", (e) => { if (downOnShade && e.target.id === id) close(id); });
+  }
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") ["dlg-plan", "dlg-journal"].forEach(close);
   });
