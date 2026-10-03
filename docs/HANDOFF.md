@@ -13,6 +13,7 @@
 - **Сайт:** https://saturn5-mission.pages.dev (Cloudflare Pages, проект `saturn5-mission`, база D1 `saturn5`, вход в wrangler уже выполнен).
 - **Версия без сервера на claude.ai:** https://claude.ai/artifact/McjvE2rzqvqa2h9TV7QSj4. Публикуется через Artifact tool из `dist/index.html` (собирается `python3 tools/build-artifact.py`); в `files` передаются изменённые js/css/assets.
 - **Выкладка на сайт:** `bash tools/deploy-cloudflare.sh`. Скрипт копирует index.html, css, js, vendor, assets в build/site, применяет migrations/*.sql и деплоит вместе с functions/.
+- **Git:** локальный репозиторий в папке проекта (ветка `main`), на GitHub не выкладываем — так решила Арина. Секреты (`.dev.vars`, `.suno.env`), `.wrangler/`, сборки и исходник видео NASA — в `.gitignore`.
 - **Документы:** `GAME_DESIGN.md` (описание игры), `docs/PLAN.md` (утверждённый план уроков на 10 глав).
 - **Код:**
   - `index.html` — экраны и окна; английские тексты в атрибутах `data-en`, `data-en-html`, `data-en-ph`, `data-en-aria`.
