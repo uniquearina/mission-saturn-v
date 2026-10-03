@@ -417,7 +417,6 @@ kbd {
 .kgrp { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
 .bf-art .bf-carry { animation: bfcarry 3.4s ease-in-out infinite; }
 @keyframes bfcarry { 0%, 15% { transform: translate(0px, 0px); } 60%, 85% { transform: translate(220px, 0px); } 100% { transform: translate(0px, 0px); } }
-.bf-arrow-svg { font: 600 16px var(--f-mono); fill: var(--amber); }
 .rk-seg.is-next * { stroke: var(--amber); stroke-width: 0.6; stroke-dasharray: none; animation: goal 1.4s ease-in-out infinite; }
 
 /* ───────── Инструктаж миссии ───────── */
@@ -439,17 +438,11 @@ kbd {
 
 /* ───────── Замок проверки систем ───────── */
 .ob-shade .sh { position: fixed; z-index: 30; background: rgba(2, 5, 7, 0.8); transition: all 0.35s; }
-.sh-lid { position: fixed; z-index: 30; pointer-events: none; }
-.ob-shade.is-locked .sh-lid { pointer-events: auto; cursor: not-allowed; }
 .spot-ring { position: fixed; z-index: 30; pointer-events: none; border: 3px solid var(--amber); border-radius: 12px; box-sizing: border-box; transition: all 0.35s; animation: target 1.3s ease-out infinite; }
-.ob-shade.is-locked .spot-ring { border-style: dashed; opacity: 0.55; animation: none; }
-.spot-wait { display: none; align-items: center; gap: 8px; margin-bottom: 6px !important; font: 600 13px var(--f-mono) !important; letter-spacing: 0.1em; text-transform: uppercase; }
-.spot-bubble.is-locked .spot-wait { display: flex; }
 .bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 14px; }
 .bars i { width: 3px; background: #1b1206; border-radius: 1px; animation: bar 0.9s ease-in-out infinite; }
 .bars i:nth-child(2) { animation-delay: 0.15s; } .bars i:nth-child(3) { animation-delay: 0.3s; }
 @keyframes bar { 0%, 100% { height: 4px; } 50% { height: 14px; } }
-.btn.is-wait { opacity: 0.55; cursor: wait; }
 
 /* ───────── Переводы английских слов ───────── */
 .tile-words { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.1; gap: 2px; }
@@ -734,7 +727,6 @@ img.zoomable { cursor: zoom-in; }
 .pf-account { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
 .pf-account-line { margin: 0; font-size: 16px; color: var(--ink); overflow-wrap: anywhere; }
 #pf-noemail { color: var(--ink-dim); font-size: 15px; }
-.bf-crane { fill: rgba(102, 115, 122, 0.18); stroke: var(--steel); stroke-width: 2; }
 .tb-sound { padding: 8px 10px; }
 .tb-sound[aria-pressed="false"] { position: relative; }
 .tb-sound[aria-pressed="false"]::after { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; border-top: 2px solid var(--ink-dim); transform: rotate(-35deg); }

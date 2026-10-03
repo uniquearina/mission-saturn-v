@@ -873,31 +873,18 @@
     close("dlg-photo");
   });
 
-  // ───────── Брифинг: 4 карточки перед первой сменой ─────────
+  // ───────── Брифинг: 3 карточки перед первой сменой ─────────
   const BRIEF = [
-    { text: L("Это Сатурн-5, высота 110 метров. На такой ракете люди полетели на Луну.", "This is Saturn V, 110 meters tall. People flew to the Moon on this rocket."), art: "rocket" },
-    { text: L("Ракету собирают из пяти частей: трёх ступеней, приборного отсека и корабля «Аполлон».", "The rocket is built from five parts: three stages, the Instrument Unit and the Apollo spacecraft."), art: "parts" },
-    // Честно: в 1969 году ступени ставили мостовые краны, а у нас тренажёр с дроном.
-    { text: L("В 1969 году ступени поднимали краны на 250 тонн. А это тренажёр ЦУП: ты повторишь ту сборку.", "In 1969, the stages were lifted by 250-ton cranes. This is a Mission Control trainer: you'll repeat that build."), art: "crane" },
-    { text: L("{kid}, это Пип — твой дрон. Он берёт части захватом и переносит их на площадку.", "{kid}, this is Pip — your drone. It grabs parts and carries them to the pad."), art: "carry" },
-    { text: L("Доставь каждую часть на площадку. Кран поставит её на ракету. Пять частей — и ракета собрана.", "Bring each part to the pad. The crane puts it on the rocket. Five parts — and the rocket is built."), art: "assemble" },
-    { text: L("Дрон слушается программы на языке Python. Ты пишешь команду и нажимаешь ПУСК — дрон выполняет.", "The drone follows a program in Python. You type a command and press RUN — the drone does it."), art: "code" },
+    { text: L("Это Сатурн-5: 110 метров, на нём люди полетели на Луну. Его собирают из пяти частей.", "This is Saturn V: 110 meters tall, the rocket that flew people to the Moon. It's built from five parts."), art: "rocket" },
+    { text: L("{kid}, это Пип — твой дрон. Он переносит части на площадку, а кран ставит их на ракету.", "{kid}, this is Pip — your drone. It carries the parts to the pad, and the crane puts them on the rocket."), art: "carry" },
+    { text: L("Пип слушается программы на Python. Пишешь команду, жмёшь ПУСК — Пип выполняет.", "Pip follows a program in Python. You type a command, press RUN — Pip does it."), art: "code" },
   ];
   let bfIndex = 0, bfDone = null, bfToken = 0;
 
-  // Кнопка ждёт, пока голос договорит: «Слушай…», потом своё название.
-  function waitButton(btn, label, promise, isCurrent) {
-    btn.dataset.label = label;
-    btn.disabled = true;
-    btn.classList.add("is-wait");
-    btn.textContent = L("Слушай…", "Listen…");
-    promise.then(() => {
-      if (!isCurrent()) return;
-      btn.disabled = false;
-      btn.classList.remove("is-wait");
-      btn.textContent = label;
-      btn.focus();
-    });
+  // Кнопка сразу готова: ребёнок может нажать, не дожидаясь голоса.
+  function readyButton(btn, label) {
+    btn.disabled = false;
+    btn.textContent = label;
   }
 
   function bfArt(kind) {
@@ -911,24 +898,6 @@
       svg.setAttribute("viewBox", "-40 -116 80 124");
       drawRocket(svg, G.levels.ROCKET.map((p) => p.id));
       el("text", { x: 12, y: -108, class: "bf-label" }, svg).textContent = L("110 м", "110 m");
-    } else if (kind === "parts") {
-      svg.setAttribute("viewBox", "0 0 540 110");
-      ["S-IC", "S-II", "S-IVB", "IU", "APOLLO"].forEach((id, i) => {
-        const g = drawPart(id, svg);
-        g.setAttribute("transform", `translate(${60 + i * 105} 45)`);
-      });
-    } else if (kind === "crane") {
-      // Мостовой кран здания сборки: балка на опорах, тележка, трос с крюком, на нём ступень.
-      svg.setAttribute("viewBox", "0 0 320 170");
-      el("line", { x1: 10, x2: 310, y1: 160, y2: 160, class: "floor-line" }, svg);
-      for (const x of [30, 290]) el("rect", { x: x - 5, y: 20, width: 10, height: 140, class: "bf-crane" }, svg);
-      el("rect", { x: 20, y: 14, width: 280, height: 12, class: "bf-crane" }, svg);
-      el("rect", { x: 140, y: 26, width: 40, height: 10, class: "bf-crane" }, svg);
-      el("line", { x1: 160, x2: 160, y1: 36, y2: 78, class: "crane-cable" }, svg);
-      el("path", { d: "M153 78 q7 10 14 0", class: "crane-hook" }, svg);
-      const st = drawPart("S-II", svg);
-      st.setAttribute("transform", "translate(160 112) rotate(-90) scale(1.1)");
-      el("text", { x: 160, y: 10, class: "bf-label", "text-anchor": "middle" }, svg).textContent = L("КРАН 250 Т", "250-TON CRANE");
     } else if (kind === "carry") {
       // Дрон несёт ступень к площадке.
       svg.setAttribute("viewBox", "-70 -70 340 150");
@@ -938,15 +907,6 @@
       const d = drawDrone(svg);
       drawPart("S-IC", d.hold).setAttribute("transform", "scale(0.8)");
       d.g.classList.add("bf-carry");
-    } else if (kind === "assemble") {
-      // Деталь → ракета: видно, куда она встанет.
-      svg.setAttribute("viewBox", "-70 -120 180 128");
-      const part = drawPart("S-II", svg);
-      part.setAttribute("transform", "translate(-30 -50) scale(0.55)");
-      el("text", { x: 8, y: -46, class: "bf-arrow-svg" }, svg).textContent = "→";
-      const rk = el("g", { transform: "translate(62 0)" }, svg);
-      drawRocket(rk, ["S-IC"]);
-      rk.querySelector('[data-id="S-II"]').classList.add("is-next");
     } else if (kind === "code") {
       box.innerHTML = `<span class="bf-cmd"><code class="bf-code">right()</code>${G.lang === "ru" ? '<span class="bf-ru">вправо</span>' : ""}</span><span class="bf-arrow" aria-hidden="true">→</span>`;
       const s2 = document.createElementNS(NS, "svg");
@@ -1009,9 +969,7 @@
       $("in-example").hidden = true;
       $("in-replay").hidden = true;
       // Задание — просто текст, его можно прочитать быстрее голоса.
-      $("in-next").disabled = false;
-      $("in-next").classList.remove("is-wait");
-      $("in-next").textContent = ex ? L("Дальше", "Next") : L("Мой ход", "My turn");
+      readyButton($("in-next"), ex ? L("Дальше", "Next") : L("Мой ход", "My turn"));
       speak(mission.brief.text);
       $("in-next").focus();
     } else {
@@ -1048,8 +1006,8 @@
       $("in-words").hidden = !words.length || !!ex.steps;
       $("in-example").hidden = false;
       $("in-replay").hidden = ex.demo === false;
-      const shown = speak(exampleText(ex)).then(() => (my === inToken && !$("intro").hidden ? runDemo() : null));
-      waitButton($("in-next"), L("Мой ход", "My turn"), shown, () => my === inToken);
+      speak(exampleText(ex)).then(() => (my === inToken && !$("intro").hidden ? runDemo() : null));
+      readyButton($("in-next"), L("Мой ход", "My turn"));
     }
   }
 
@@ -1088,31 +1046,22 @@
   });
   $("in-replay").addEventListener("click", () => { G.voice.stop(); runDemo(); });
   $("in-say").addEventListener("click", () => {
-    const my = ++inToken;
+    ++inToken;   // показ образца, который ждал конца фразы, отменяется
     G.voice.stop();
-    if (inPage === 0) { speak(mission.brief.text); return; }
-    waitButton($("in-next"), L("Мой ход", "My turn"), speak(exampleText(mission.example)), () => my === inToken);
+    speak(inPage === 0 ? mission.brief.text : exampleText(mission.example));
   });
   $("btn-intro").addEventListener("click", () => openIntro(mission.example ? 1 : 0));
 
   // ───────── Миссия 0 · Проверка систем (онбординг) ─────────
   let ob = null; // { i: номер пункта, busy }
 
-  let spotTarget = null, locked = false;
+  let spotTarget = null;
 
   // Затемнение из четырёх панелей вокруг светлого окна: панели ловят клики,
-  // поэтому нажать можно только то, что в окне. Пока говорит ЦУП, окно закрыто крышкой.
+  // поэтому нажать можно только то, что в окне. Нажимать можно сразу, не дожидаясь голоса.
   function clearTarget() {
     spotTarget = null;
     $("ob-shade").hidden = $("spot-bubble").hidden = true;
-  }
-  // ОТЛАДКА: пока true, нажимать можно и во время голоса. Перед показом ребёнку — false.
-  const DEV_UNLOCK = false;
-  function lock(on) {
-    on = on && !DEV_UNLOCK;
-    locked = on;
-    $("ob-shade").classList.toggle("is-locked", on);
-    $("spot-bubble").classList.toggle("is-locked", on);
   }
   function placeSpot() {
     if (!spotTarget) return;
@@ -1127,7 +1076,6 @@
         : side === "l" ? { left: "0", top: px(y), width: px(Math.max(0, x)), height: px(h) }
         : { left: px(x + w), top: px(y), width: px(Math.max(0, innerWidth - x - w)), height: px(h) });
     }
-    Object.assign($("sh-lid").style, box);
     Object.assign($("spot-ring").style, box);
     const bub = $("spot-bubble");
     const bw = Math.min(380, innerWidth - 32), bh = bub.offsetHeight || 120, gap = pad + 14;
@@ -1160,7 +1108,6 @@
   function checkTarget(key) {
     return {
       radio: () => $("btn-brief-say"),
-      bay: () => document.querySelector("#scene .drone"),
       tiles: () => document.querySelector("#tiles .tile"),
       keys: () => document.querySelector(".editor-wrap"),
       run: () => $("btn-run"),
@@ -1186,25 +1133,21 @@
     showStep();
   }
 
-  // Пункт: подсветить цель, закрыть её крышкой, рассказать голосом, открыть.
-  async function showStep() {
-    const i = ob.i, s = CHECK.steps[i];
+  // Пункт: подсветить цель и рассказать голосом. Нажать можно сразу.
+  function showStep() {
+    const s = CHECK.steps[ob.i];
     renderChecklist();
-    lock(true);
-    if (s.key === "keys" && !DEV_UNLOCK) editor.setReadOnly(true);
     const t = checkTarget(s.key);
     if (t) setSpot(t, s);
-    await speak(stepText(s));
-    if (!ob || ob.i !== i) return;
-    lock(false);
-    if (s.key === "keys") { editor.setReadOnly(false); if (!G.touch) editor.focus(); }
+    if (s.key === "keys" && !G.touch) editor.focus();
+    G.voice.stop();   // ребёнок нажал раньше, чем ЦУП договорил, — прошлая фраза обрывается
+    speak(stepText(s));
   }
 
   // Пункт выполнен: зелёная лампа, короткий ответ ЦУП, следующий пункт.
   async function checkDone(key) {
-    if (!ob || ob.busy || locked || CHECK.steps[ob.i].key !== key) return;
+    if (!ob || ob.busy || CHECK.steps[ob.i].key !== key) return;
     ob.busy = true;
-    lock(true);
     const s = CHECK.steps[ob.i];
     ob.i++;
     renderChecklist();
@@ -1223,13 +1166,8 @@
     await speak(CHECK.final);
     await G.world.sleep(500);
     clearTarget();
-    lock(false);
     startMission(1);
   }
-
-  $("scene").addEventListener("click", (e) => {
-    if (e.target.closest && e.target.closest(".drone")) checkDone("bay");
-  });
 
   function updateRocket(justPlaced) {
     const placed = partsBefore(mission.id).concat(scene.state ? scene.state.stack : []);
@@ -1288,7 +1226,7 @@
   // ───────── Пуск ─────────
   async function run() {
     if (running || !mission) return;
-    if (ob && (locked || CHECK.steps[ob.i].key !== "run")) return;
+    if (ob && CHECK.steps[ob.i].key !== "run") return;
     G.voice.stop();
     editor.clearMarks();
     scene.load(mission);
@@ -1312,7 +1250,7 @@
     }
 
     // Проверка систем: пока дрон летит, смотрим на поле; при ошибке — снова к кнопке ПУСК.
-    if (ob) { lock(true); setSpot($("scene"), { text: L("Смотри: дрон выполняет твою программу.", "Watch: the drone runs your program.") }); }
+    if (ob) setSpot($("scene"), { text: L("Смотри: дрон выполняет твою программу.", "Watch: the drone runs your program.") });
     running = true;
     editor.setReadOnly(true);
     $("btn-run").disabled = true;
@@ -1347,7 +1285,6 @@
       $("btn-run").disabled = false;
       if (ob && CHECK.steps[ob.i] && CHECK.steps[ob.i].key === "run") {
         setSpot($("btn-run"), CHECK.steps[ob.i]);
-        lock(false);
       }
     }
   }
