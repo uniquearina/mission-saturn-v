@@ -114,7 +114,22 @@ const SOL = {
       await page.evaluate(() => G.debug.editor.set("down(2)\ngrab()\nleft(5)\ndrop()"));
       await runAndWait(); console.log("M8 girder:", await radio());
     }
-    await page.evaluate((c) => G.debug.editor.set(c), SOL[id]);
+    if (id === 4) {
+      // Забыл кавычки — понятная подсказка.
+      for (const c of ["print(Ступень)", "print(Ступень на месте)"]) { await page.evaluate((x) => G.debug.editor.set(x), c); await runAndWait(); console.log("M4 no quotes:", await radio()); }
+      // По-настоящему: рамка между скобками → одна кавычка (вторую ставит игра) → текст.
+      await page.evaluate(() => G.debug.editor.set("print()\n", { line: 0, ch: 6 }));
+      await page.evaluate(() => G.debug.editor.focus());
+      await page.keyboard.type('"');
+      await page.keyboard.type("Ступень на месте");
+      console.log("M4 typed:", JSON.stringify(await page.evaluate(() => G.debug.editor.value)));
+    } else if (id === 9) {
+      // Первый доклад уже есть, два — плиткой.
+      await page.evaluate(() => G.debug.editor.set('print("Двигатели готовы")\n', { line: 1, ch: 0 }));
+      await page.click(".tile"); await page.keyboard.type("Связь есть");
+      await page.click(".tile"); await page.keyboard.type("Экипаж готов");
+      console.log("M9 typed:", JSON.stringify(await page.evaluate(() => G.debug.editor.value)));
+    } else await page.evaluate((c) => G.debug.editor.set(c), SOL[id]);
     await runAndWait();
     console.log(`M${id}:`, await page.isVisible("#dlg-success"), "|", await radio());
     if (id === 10) await page.screenshot({ path: OUT + "/s10-success.png" });

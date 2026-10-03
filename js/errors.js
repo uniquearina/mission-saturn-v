@@ -70,9 +70,17 @@
 
   const lineTag = (n) => (n ? L(` Строка ${n}.`, ` Line ${n}.`) : "");
 
-  // Ошибка из Python-раннера → сообщение.
-  function fromPython(err) {
+  // Слова в print без кавычек: print(Ступень на месте).
+  const noQuotes = (src) => /\bprint\(\s*[^\s"')\d-]/.test(src || "");
+  const noQuotesMsg = (n) => msg(L(`Слова для ЦУП пишутся внутри кавычек: print("Ступень на месте").${lineTag(n)}`,
+    `Words for Houston go inside quotes: print("Stage is in place").${lineTag(n)}`), n);
+
+  // Ошибка из Python-раннера → сообщение. src — текст строки с ошибкой (если есть).
+  function fromPython(err, src) {
     const n = err.line, t = lineTag(n);
+    const line = src || err.text || "";
+    if (err.kind === "syntax" && noQuotes(line)) return noQuotesMsg(n);
+    if (err.kind === "name" && /^[\p{L}\p{N}_]+$/u.test(err.name || "") && new RegExp("print\\(\\s*" + err.name, "u").test(line)) return noQuotesMsg(n);
     switch (err.kind) {
       case "name": {
         const name = err.name;

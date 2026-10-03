@@ -1028,6 +1028,15 @@
       const words = [...new Set(ex.code.match(/[a-z]+/g) || [])].filter((w) => G.levels.WORDS[w]);
       $("in-words").innerHTML = words.map((w) => `<span class="word"><code>${w}</code> — ${G.levels.WORDS[w]}</span>`).join("");
       $("in-words").hidden = !words.length || !!ex.steps;
+      // Матрёшка: команда → скобки → сообщение в кавычках. Видно, что во что вложено.
+      const dg = $("in-diagram");
+      dg.hidden = !ex.diagram;
+      if (ex.diagram) {
+        dg.innerHTML = `<div class="dg-part"><code class="dg-cmd"></code><span class="dg-lab">${L("напечатать", "print")}</span></div>`
+          + `<div class="dg-part"><div class="dg-box"><code class="dg-br">(</code><div class="dg-part"><code class="dg-cap"></code><span class="dg-lab">${L("сообщение в кавычках", "message in quotes")}</span></div><code class="dg-br">)</code></div><span class="dg-lab">${L("скобки", "brackets")}</span></div>`;
+        dg.querySelector(".dg-cmd").textContent = ex.diagram.cmd;
+        dg.querySelector(".dg-cap").textContent = ex.diagram.text;
+      }
       $("in-example").hidden = false;
       $("in-replay").hidden = ex.demo === false;
       speak(exampleText(ex)).then(() => (my === inToken && !$("intro").hidden ? runDemo() : null));
@@ -1281,7 +1290,7 @@
     try {
       const res = G.python.run(editor.value);
       if (!res.ok && res.error.kind === "syntax" || !res.ok && res.error.kind === "no_parens") {
-        fail(G.errors.fromPython(res.error));
+        fail(pyError(res.error));
         return;
       }
       const out = await scene.play(res.actions, {
@@ -1294,7 +1303,7 @@
       });
       editor.clearMarks();
       if (out.error) { fail(out.error, out.line); return; }
-      if (!res.ok) { fail(G.errors.fromPython(res.error)); return; }
+      if (!res.ok) { fail(pyError(res.error)); return; }
       if (mission.id === 0) {
         if (ob && CHECK.steps[ob.i].key === "run") await finishCheck();
         else radio("cup", L("Пробный полёт выполнен.", "Test flight complete."));
@@ -1312,6 +1321,9 @@
       }
     }
   }
+
+  // Ошибка Python → сообщение; строка программы помогает узнать «забыл кавычки».
+  const pyError = (err) => G.errors.fromPython(err, editor.value.split("\n")[(err.line || 1) - 1] || "");
 
   function fail(m, line) {
     const extra = m.kind && mission.flightHints && mission.flightHints[m.kind];

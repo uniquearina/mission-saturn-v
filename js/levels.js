@@ -41,7 +41,9 @@
       },
       // Первая встреча с кодом: собираем команду по шагам, новое подсвечено.
       example: { title: L("Учимся: как написать сообщение", "Learn: how to write a message"), code: L('print("ЦУП, приём")', 'print("Houston, come in")'), notes: [],
-        caption: L("print — «напечатать». Текст пишется в кавычках, кавычки — в скобках.", "print means “print”. The text goes in quotes, the quotes go in brackets."),
+        caption: L("Сообщение — в кавычках. Кавычки — в скобках.", "The message goes in quotes. The quotes go in brackets."),
+        // Матрёшка под шагами: print → скобки → сообщение в кавычках (js/main.js, showIntroPage).
+        diagram: { cmd: "print", text: L('"ЦУП, приём"', '"Houston, come in"') },
         steps: [
           { before: "", add: 'print("")', after: "", text: L("Нажми плитку print — она напишет команду.", "Press the print tile — it writes the command.") },
           { before: 'print("', add: L("ЦУП, приём", "Houston, come in"), after: '")', text: L("Внутри кавычек напиши текст.", "Inside the quotes, type the text.") },
@@ -122,21 +124,32 @@
     {
       id: 4, title: L("Доклад", "Report"),
       brief: {
-        text: L("Доложи ЦУП, что первая ступень стоит. Скобки уже есть — поставь кавычки и напиши сообщение сам.",
-          "Report to Houston that the first stage is in place. The brackets are there — add quotes and write the message yourself."),
+        text: L("Доложи ЦУП, что первая ступень стоит. В этот раз кавычки ставишь ты.",
+          "Report to Houston that the first stage is in place. This time you add the quotes."),
       },
-      example: { title: L("Учимся: кавычки сам", "Learn: quotes on your own"), code: L('print("Ступень на месте")', 'print("Stage is in place")'), notes: L(["текст — какой хочешь"], ["any text you like"]),
-        caption: L("В прошлый раз кавычки поставила плитка. Теперь поставь их сам: Shift и 2.", "Last time the tile added the quotes. Now add them yourself.") },
+      // Кавычки сам, но по шагам: одна кавычка — вторую ставит игра (пары в editor.js), потом текст.
+      example: { title: L("Учимся: кавычки сам", "Learn: quotes on your own"), code: L('print("Ступень на месте")', 'print("Stage is in place")'),
+        steps: L([
+          { text: "Переключи раскладку на русскую." },
+          { before: "print(", add: '""', after: ")", text: "Внутри скобок поставь кавычку — вторая появится сама.", keys: ["Shift", "2"] },
+          { before: 'print("', add: "Ступень на месте", after: '")', text: "Между кавычками напиши доклад — какой хочешь." },
+          { text: "Нажми ПУСК." },
+        ], [
+          { before: "print(", add: '""', after: ")", text: "Inside the brackets type a quote — the second one appears by itself.", keys: ["Shift", "'"] },
+          { before: 'print("', add: "Stage is in place", after: '")', text: "Between the quotes type your report — any words you like." },
+          { text: "Press RUN." },
+        ]) },
       drone: { x: 1, y: 1 }, parts: [], girders: [],
       commands: [], insertTiles: false, maxLines: 5,
       starter: "print()\n", cursor: { line: 0, ch: 6 },
-      ghost: { line: 0, text: L("← кавычки и текст внутри скобок", "← quotes and text inside the brackets") },
+      slot: { line: 0, ch: 6 },
+      ghost: { line: 0, text: L("← сюда кавычки", "← quotes go here") },
       goal: (ctx) => ctx.prints.some((t) => t.trim()) ? null
         : G.errors.msg(L('ЦУП ничего не услышал. Внутри скобок нужны кавычки с текстом: print("Ступень на месте").', 'Houston heard nothing. Put quotes with text inside the brackets: print("Stage is in place").')),
       success: { text: L("Принято, {name}. Первая ступень на месте — отличная работа, {kid}.", "Copy that, {name}. First stage confirmed — great work, {kid}.") },
       hints: [
-        { text: L("Поставь курсор между скобками и нажми Shift и 2 — появятся кавычки.", "Put the cursor between the brackets and type quotes.") },
-        { text: L("Между кавычками напиши любой текст, например: Ступень на месте.", "Between the quotes type any text, for example: Stage is in place.") },
+        { text: L("Переключи раскладку на русскую и нажми на жёлтую рамку между скобками.", "Click the yellow box between the brackets.") },
+        { text: L("Нажми Shift и 2 — появятся две кавычки. Между ними напиши доклад.", "Type a quote — two quotes appear. Type your report between them.") },
         { text: READY, code: L('print("Ступень на месте")', 'print("Stage is in place")') },
       ],
       fact: {
@@ -247,22 +260,24 @@
     {
       id: 9, title: L("Чек-лист", "Checklist"),
       brief: {
-        text: L("Перед стартом ЦУП проверяет все системы. Передай три доклада: «Двигатели готовы», «Связь в норме», «Экипаж на борту».",
-          "Before launch, Houston checks every system. Send three reports: “Engines ready”, “Radio OK”, “Crew aboard”."),
-        note: L("Каждый доклад — своя строка со своим print.", "Each report is its own line with its own print."),
+        text: L("Перед стартом ЦУП проверяет системы. Первый доклад уже есть. Добавь плиткой ещё два: «Связь есть» и «Экипаж готов».",
+          "Before launch, Houston checks the systems. The first report is already there. Add two more with the tile: “Radio on” and “Crew ready”."),
+        note: L("Нажми плитку print — и напиши доклад в кавычках.", "Press the print tile — and type the report in the quotes."),
       },
       // Новой команды нет — экрана «Учимся» тоже нет.
       drone: { x: 3, y: 2 }, parts: [], girders: [],
-      commands: [], insertTiles: false, maxLines: 5, starter: "",
+      // Первый доклад — образец, два других — плиткой print (кавычки ставит плитка).
+      commands: ["print"], insertTiles: true, maxLines: 5,
+      starter: L('print("Двигатели готовы")\n', 'print("Engines ready")\n'), cursor: { line: 1, ch: 0 },
       goal: (ctx) => {
         const n = ctx.prints.filter((t) => t.trim()).length;
         return n >= 3 ? null : G.errors.msg(L(`ЦУП получил докладов: ${n} из 3. Каждый доклад — отдельная строка с print.`, `Houston got ${n} of 3 reports. Each report is a separate line with print.`));
       },
       success: { text: L("Все системы — готов. Чек-лист пройден, {kid}.", "All systems go. Checklist complete, {kid}.") },
       hints: [
-        { text: L("Нужно три строки, и в каждой — print с текстом в кавычках.", "You need three lines, each with print and text in quotes.") },
-        { text: L('Первая строка: print("Двигатели готовы"). Остальные — так же, со своим текстом.', 'First line: print("Engines ready"). The others the same way, with their own text.') },
-        { text: READY, code: L('print("Двигатели готовы")\nprint("Связь в норме")\nprint("Экипаж на борту")', 'print("Engines ready")\nprint("Radio OK")\nprint("Crew aboard")') },
+        { text: L("Нажми плитку print — появится новая строка с кавычками.", "Press the print tile — a new line with quotes appears.") },
+        { text: L("Внутри кавычек напиши: Связь есть. Потом снова плитка — и Экипаж готов.", "Inside the quotes type: Radio on. Then the tile again — and Crew ready.") },
+        { text: READY, code: L('print("Двигатели готовы")\nprint("Связь есть")\nprint("Экипаж готов")', 'print("Engines ready")\nprint("Radio on")\nprint("Crew ready")') },
       ],
       fact: {
         photo: { src: "assets/photos/m09-liftoff.jpg", caption: L("Старт «Аполлона-11», 16 июля 1969", "Apollo 11 liftoff, July 16, 1969") },

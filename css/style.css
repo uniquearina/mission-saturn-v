@@ -210,7 +210,9 @@ kbd {
 .CodeMirror-selected, .CodeMirror-focused .CodeMirror-selected { background: rgba(134, 197, 240, 0.22); }
 .cm-s-default .cm-keyword { color: var(--amber); }
 .cm-s-default .cm-builtin { color: var(--sky); }
-.cm-s-default .cm-string { color: var(--dsky); }
+/* «Капсула» сообщения: текст в кавычках обведён — видно, что это один предмет внутри скобок.
+   Рамка — тенью, а не border: иначе CodeMirror неверно ставит курсор. */
+.cm-s-default .cm-string { color: var(--dsky); background: rgba(155, 227, 180, 0.1); box-shadow: inset 0 0 0 1px rgba(155, 227, 180, 0.55); border-radius: 4px; }
 .cm-s-default .cm-number { color: #ffcf8a; }
 .cm-s-default .cm-comment { color: var(--ink-dim); font-style: italic; }
 .cm-s-default .cm-variable, .cm-s-default .cm-def { color: var(--ink); }
@@ -753,3 +755,14 @@ img.zoomable { cursor: zoom-in; }
 .helmet-zoom input { flex: 1; accent-color: var(--amber); }
 /* Прогресс с этого устройства — переносится в аккаунт только по нажатию. */
 .profile.is-device { border-style: dashed; }
+
+/* ───────── Матрёшка на экране «Учимся»: print → скобки → сообщение в кавычках ───────── */
+.in-diagram { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 10px; padding: 10px 4px 2px; }
+.dg-part { display: grid; justify-items: center; gap: 6px; }
+.dg-cmd { font: 600 24px var(--f-mono); color: var(--ink); }
+.dg-box { display: flex; align-items: flex-start; gap: 6px; padding: 6px 10px; border: 2px dashed var(--amber); border-radius: 10px; }
+.dg-br { font: 600 24px var(--f-mono); color: var(--amber); }
+.dg-cap { font: 600 22px var(--f-mono); color: var(--dsky); background: rgba(155, 227, 180, 0.1); box-shadow: inset 0 0 0 2px rgba(155, 227, 180, 0.6); border-radius: 8px; padding: 2px 10px; }
+.dg-lab { font: 600 12px var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim); text-align: center; }
+.dg-box + .dg-lab { color: var(--amber); }
+.dg-cap + .dg-lab { color: var(--dsky); }
